@@ -3,22 +3,9 @@
 
 const path = require('path');
 const TsConfigPathsPlugin =  require('tsconfig-paths-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-const config = {
-    target: 'electron-main',
-    node: {
-        __dirname: false
-    },
-    entry: {
-        "app": './app/main.ts'
-    },
-    mode: "development",
-    output: {
-        path: path.resolve(process.cwd(), 'dist'),
-        libraryTarget: 'commonjs2',
-        devtoolModuleFilenameTemplate: '../[resource-path]',
-        chunkFilename: "[name].chunk.js"
-    },
+const electonBaseConfiguration = {
     devtool: 'source-map',
     resolve: {
         // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
@@ -45,4 +32,46 @@ const config = {
     }
 };
 
-module.exports = config;
+/**
+ * webpack for electron main process, this is the file which
+ * will started with electron
+ */
+const electronMainProcess = {
+    ...electonBaseConfiguration,
+    target: 'electron-main',
+    output: {
+        path: path.resolve(process.cwd(), 'dist'),
+        filename: "electron-[name].js"
+    },
+    node: {
+        __dirname: false
+    },
+    entry: {
+        "app": './app/electron/main.ts'
+    },
+    mode: "development"
+};
+
+/**
+ * webpack for electron renderer process, this file would be included
+ * into the index.html file
+ */
+const electronRendererProcess = {
+    ...electonBaseConfiguration,
+    output: {
+        path: path.resolve(process.cwd(), 'dist'),
+        filename: "renderer-[name].js"
+    },
+    target: 'electron-renderer',
+    entry: {
+        "view": './app/view/main.ts'
+    },
+    mode: "development",
+    plugins: [
+        new HtmlWebpackPlugin({
+            template: "./app/view/main.html"
+        })
+    ]
+};
+
+module.exports = [electronMainProcess, electronRendererProcess];
