@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu } from "electron";
+import {app, BrowserWindow, Menu} from "electron";
 import * as path from "path";
 
 function createWindow () {
@@ -15,14 +15,12 @@ function createWindow () {
   mainWindow.loadFile(path.resolve(__dirname, 'index.html'));
 }
 
-const template: any[] = [
-    {
-        label: 'Edit',
-        submenu: [{
-          role: 'toggleDevTools'
-        }]
-    }
-]
+const template: any[] = [{
+  label: 'Edit',
+  submenu: [{
+    role: 'toggleDevTools'
+  }]
+}]
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

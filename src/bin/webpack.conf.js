@@ -15,6 +15,7 @@ const electonBaseConfiguration = {
             configFile: path.resolve(process.cwd(), "./tsconfig.json")
         })]
     },
+    externals: [],
     module: {
         rules: [
             {
@@ -47,7 +48,7 @@ const electronMainProcess = {
         __dirname: false
     },
     entry: {
-        "app": './app/electron/main.ts'
+        "main": './lib/electron/main/main.ts'
     },
     mode: "development"
 };
@@ -62,16 +63,32 @@ const electronRendererProcess = {
         path: path.resolve(process.cwd(), 'dist'),
         filename: "renderer-[name].js"
     },
-    target: 'electron-renderer',
+    target: "electron-renderer",
     entry: {
-        "view": './app/view/main.ts'
+        "view": './lib/electron/renderer/main.ts'
     },
     mode: "development",
     plugins: [
         new HtmlWebpackPlugin({
-            template: "./app/view/main.html"
+            template: "./lib/electron/renderer/main.html"
         })
     ]
 };
 
-module.exports = [electronMainProcess, electronRendererProcess];
+const electronModule = {
+    ...electonBaseConfiguration,
+    output: {
+        path: path.resolve(process.cwd(), 'dist'),
+        filename: "app.js"
+    },
+    target: "node",
+    entry: {
+        "main": './lib/app/main.ts'
+    },
+    mode: "development",
+}
+
+module.exports = [
+    electronMainProcess,
+    electronRendererProcess
+];
