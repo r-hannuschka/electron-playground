@@ -132,17 +132,19 @@ export class ElectronInstaller {
 
     /**
      * finalize installation
+     * write path.txt and delete electron.zip
      * 
      */
     public async finalizeInstallation(): Promise<void> {
         return new Promise((resolve) => {
-
             const pathTxt = path.resolve(__dirname, 'path.txt');
             const pathTxt$ = fs.createWriteStream(pathTxt);
 
             pathTxt$.once("close", () => resolve());
             pathTxt$.write(path.join(__dirname, this.installPath, this.getPlatformPath()));
             pathTxt$.close();
+
+            fs.unlinkSync(path.join(__dirname, this.installPath, 'electron.zip'));
         });
     }
 
@@ -160,7 +162,7 @@ export class ElectronInstaller {
      * extract elctron binary
      *
      */
-    private async extractFile (): Promise<void> {
+    private extractFile (): Promise<void> {
 
         const source = path.resolve(__dirname, this.installPath, `electron.zip`);
         const outDir = path.join(__dirname, this.installPath);
@@ -187,11 +189,7 @@ export class ElectronInstaller {
         return new Promise((resolve, reject) => {
             const childProcess = spawn("unzip", ["-o", source, "-d", out], {stdio: "inherit"});
             childProcess.on("exit", (code) => {
-                if (code === 0) {
-                    fs.writeFileSync(path.join(__dirname, 'path.txt'), this.getPlatformPath());
-                    resolve();
-                }
-                reject();
+                code === 0 ? resolve() : reject();
             });
         });
     }
