@@ -1,3 +1,4 @@
+import "electron";
 import {app, BrowserWindow, Menu} from "electron";
 import * as path from "path";
 

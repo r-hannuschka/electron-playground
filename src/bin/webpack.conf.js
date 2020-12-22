@@ -39,7 +39,7 @@ const electonBaseConfiguration = {
  */
 const electronMainProcess = {
     ...electonBaseConfiguration,
-    target: 'electron-main',
+    target: "electron-main",
     output: {
         path: path.resolve(process.cwd(), 'dist'),
         filename: "electron-[name].js"
@@ -77,18 +77,23 @@ const electronRendererProcess = {
 
 const electronModule = {
     ...electonBaseConfiguration,
+    externals: {
+        vscode: 'commonjs vscode'
+    },
     output: {
         path: path.resolve(process.cwd(), 'dist'),
-        filename: "app.js"
+        filename: "extension.js",
+        libraryTarget: 'commonjs2',
     },
     target: "node",
     entry: {
-        "main": './lib/app/main.ts'
+        "main": './lib/extension/main.ts'
     },
     mode: "development",
 }
 
 module.exports = [
+    electronModule,
     electronMainProcess,
     electronRendererProcess
 ];
