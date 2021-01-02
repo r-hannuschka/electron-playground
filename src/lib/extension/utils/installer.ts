@@ -113,7 +113,6 @@ export class ElectronInstaller {
         console.log(`Start download from: ${this.resolveDownloadUrl()} ${os.EOL}`);
 
         const download    = await fetch(this.resolveDownloadUrl());
-
         const filename    = `electron.zip`
         const fileStream  = fs.createWriteStream(path.join(__dirname, this.installPath, filename), {flags: 'wx' });
 
@@ -137,13 +136,7 @@ export class ElectronInstaller {
      */
     public async finalizeInstallation(): Promise<void> {
         return new Promise((resolve) => {
-            const pathTxt = path.resolve(__dirname, 'path.txt');
-            const pathTxt$ = fs.createWriteStream(pathTxt);
-
-            pathTxt$.once("close", () => resolve());
-            pathTxt$.write(path.join(__dirname, this.installPath, this.getPlatformPath()));
-            pathTxt$.close();
-
+            this.writeExecutablePath(path.join(__dirname, this.installPath, this.resolvePlatformPath()));
             fs.unlinkSync(path.join(__dirname, this.installPath, 'electron.zip'));
         });
     }
@@ -185,7 +178,6 @@ export class ElectronInstaller {
      *
      */
     private extractMacOs(source: string, out: string): Promise<void> {
-
         return new Promise((resolve, reject) => {
             const childProcess = spawn("unzip", ["-o", source, "-d", out], {stdio: "inherit"});
             childProcess.on("exit", (code) => {
@@ -198,7 +190,7 @@ export class ElectronInstaller {
      * get platform path for electron
      *
      */
-    private getPlatformPath() {
+    private resolvePlatformPath() {
         const platform = process.env.npm_config_platform || os.platform();
         switch (platform) {
             case 'mas':
@@ -221,19 +213,38 @@ export class ElectronInstaller {
      *
      */
     private async isElectronAvailable(): Promise<boolean> {
+
         const command = await this.resolveElectronCommand();
-        return new Promise((resolve) => {
-            exec(`${command ?? `electron`} --version`, (err, version: string) => {
-
+        const available = await new Promise<boolean>((resolve) => {
+            exec(`${command ?? `electron`} --version`, (err) => {
                 if (!err && !command) {
-                    const pathTxt = path.resolve(__dirname, 'path.txt');
-                    const pathTxt$ = fs.createWriteStream(pathTxt);
-                    pathTxt$.write('electron');
-                    pathTxt$.close();
+                    this.writeExecutablePath(`electron`);
                 }
-
                 resolve(err === null);
             });
         });
+
+        /** only for mac check if not found we can find it in /Applications */
+        if (!available && os.platform() === 'darwin') {
+            const applicationsPath = path.resolve('/Applications', this.resolvePlatformPath());
+
+            if (fs.existsSync(applicationsPath) && fs.statSync(applicationsPath).isFile()) {
+                this.writeExecutablePath(applicationsPath);
+                return true;
+            }
+        }
+
+        return available;
+    }
+
+    /**
+     * write the path to executable binary into the path.txt
+     *
+     */
+    private writeExecutablePath(location: string) {
+        const pathTxt = path.resolve(__dirname, 'path.txt');
+        const pathTxt$ = fs.createWriteStream(pathTxt);
+        pathTxt$.write(location);
+        pathTxt$.close();
     }
 }
